@@ -5,8 +5,10 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 
+
 class Base(DeclarativeBase):
     pass
+
 
 db = SQLAlchemy(model_class=Base)
 basic_auth = HTTPBasicAuth()

@@ -20,18 +20,24 @@ def deploy():
     db.session.add(user)
     db.session.commit()
 
+
 @app.errorhandler(HTTPException)
 def handle_exception(e):
     response = e.get_response()
-    response.data = json.dumps({"code": e.code, "name": e.name, "description": e.description})
+    response.data = json.dumps(
+        {"code": e.code, "name": e.name, "description": e.description}
+    )
     response.content_type = "application/json"
     return response
+
 
 @multi_auth.main_auth.error_handler
 @token_auth.error_handler
 def auth_error(status):
     name = "Unauthorized" if status == 401 else "Forbidden"
-    response = jsonify({"code": status, "name": name, "description": "Invalid credentials"})
+    response = jsonify(
+        {"code": status, "name": name, "description": "Invalid credentials"}
+    )
     response.status_code = status
     return response
 
@@ -41,6 +47,7 @@ def auth_error(status):
 def user_list():
     users = User.get_all()
     return jsonify([user.to_dict() for user in users])
+
 
 @app.get("/users/<int:user_id>")
 @multi_auth.login_required
