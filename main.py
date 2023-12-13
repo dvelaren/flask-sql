@@ -23,8 +23,14 @@ def deploy():
 @app.get("/users")
 @multi_auth.login_required
 def user_list():
-    users = User.query.all()
+    users = User.get_all()
     return jsonify([user.to_dict() for user in users])
+
+@app.get("/users/<int:user_id>")
+@multi_auth.login_required
+def get_user(user_id):
+    user = db.get_or_404(User, user_id)
+    return jsonify(user.to_dict())
 
 
 @app.get("/token")

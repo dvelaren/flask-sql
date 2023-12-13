@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 @basic_auth.verify_password
 def verify_password(username, password):
-    user = User.query.filter_by(name=username).first()
+    user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one()
     if user and check_password_hash(user.password, password):
         return user
     return False
@@ -18,7 +18,7 @@ def verify_password(username, password):
 def verify_token(token):
     try:
         data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-        user = User.query.filter_by(id=data["id"]).first()
+        user = db.session.execute(db.select(User).filter_by(id=data["id"])).scalar_one()
     except:
         return False
     return user
