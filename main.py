@@ -2,7 +2,7 @@
 
 from flask import request, jsonify, json
 from werkzeug.exceptions import HTTPException
-from app import create_app, db, multi_auth
+from app import create_app, db, multi_auth, token_auth
 from app.models import User
 
 app = create_app()
@@ -28,6 +28,7 @@ def handle_exception(e):
     return response
 
 @multi_auth.main_auth.error_handler
+@token_auth.error_handler
 def auth_error(status):
     name = "Unauthorized" if status == 401 else "Forbidden"
     response = jsonify({"code": status, "name": name, "description": "Invalid credentials"})
