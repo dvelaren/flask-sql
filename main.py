@@ -27,6 +27,14 @@ def handle_exception(e):
     response.content_type = "application/json"
     return response
 
+@multi_auth.main_auth.error_handler
+def auth_error(status):
+    name = "Unauthorized" if status == 401 else "Forbidden"
+    response = jsonify({"code": status, "name": name, "description": "Invalid credentials"})
+    response.status_code = status
+    return response
+
+
 @app.get("/users")
 @multi_auth.login_required
 def user_list():
@@ -54,7 +62,7 @@ def get_auth_token():
 @multi_auth.login_required
 def create_user():
     data = request.get_json()
-    user = User(name=data["name"], email=data["email"])
+    user = User(username=data["username"], email=data["email"])
     user.hash_password(data["password"])
     db.session.add(user)
     db.session.commit()

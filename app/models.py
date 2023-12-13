@@ -8,18 +8,20 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 @basic_auth.verify_password
 def verify_password(username, password):
-    user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one()
-    if user and check_password_hash(user.password, password):
-        return user
-    return False
+    user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
+    if not user or not user.verify_password(password):
+        return False
+    return user
 
 
 @token_auth.verify_token
 def verify_token(token):
     try:
         data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-        user = db.session.execute(db.select(User).filter_by(id=data["id"])).scalar_one()
+        user = db.session.execute(db.select(User).filter_by(id=data["id"])).scalar_one_or_none()
     except:
+        return False
+    if not user:
         return False
     return user
 
@@ -49,4 +51,4 @@ class User(db.Model):
 
     @staticmethod
     def get_all():
-        return db.session.execute(db.select(User).order_by(User.id)).scalars().all()
+        return db.session.execute(db.select(User).order_by(User.id)).scalars()
