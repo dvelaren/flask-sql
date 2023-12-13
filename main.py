@@ -14,7 +14,7 @@ def make_shell_context():
 
 @app.cli.command("deploy")
 def deploy():
-    user = User(name="admin", email="admin@admin.com")
+    user = User(username="admin", email="admin@admin.com")
     user.hash_password("admin")
     db.session.add(user)
     db.session.commit()
@@ -52,7 +52,7 @@ def create_user():
 @multi_auth.login_required
 def update_user(user_id):
     data = request.get_json()
-    user = User.query.get(user_id)
+    user = db.get_or_404(User, user_id)
     for key, value in data.items():
         if key == "password":
             user.hash_password(value)
@@ -65,7 +65,7 @@ def update_user(user_id):
 @app.delete("/users/<int:user_id>")
 @multi_auth.login_required
 def delete_user(user_id):
-    user = User.query.get(user_id)
+    user = db.get_or_404(User, user_id)
     db.session.delete(user)
     db.session.commit()
     return {"user": user.id}

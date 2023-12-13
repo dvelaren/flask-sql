@@ -2,9 +2,13 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 
-db = SQLAlchemy()
+class Base(DeclarativeBase):
+    pass
+
+db = SQLAlchemy(model_class=Base)
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()
 multi_auth = MultiAuth(basic_auth, token_auth)

@@ -3,6 +3,7 @@ import jwt
 from flask import current_app as app
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, basic_auth, token_auth
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 @basic_auth.verify_password
@@ -25,10 +26,9 @@ def verify_token(token):
 
 class User(db.Model):
     __tablename__ = "users"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    email = db.Column(db.String)
-    password = db.Column(db.String)
+    id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(db.String, unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(db.String)
 
     def hash_password(self, password):
         self.password = generate_password_hash(password)
@@ -44,8 +44,8 @@ class User(db.Model):
         )
 
     def to_dict(self):
-        return {"id": self.id, "name": self.name, "email": self.email}
+        return {"id": self.id, "username": self.username, "email": self.email}
 
     @staticmethod
     def get_all():
-        return User.query.all()
+        return db.session.execute(db.select(User).order_by(User.id)).scalars().all()
