@@ -26,6 +26,7 @@ def user_list():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
 
+
 @app.get("/users/<int:user_id>")
 @multi_auth.login_required
 def get_user(user_id):
