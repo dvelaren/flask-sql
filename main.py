@@ -1,6 +1,7 @@
 # Flask SQLAlchemy test application
 
-from flask import request, jsonify
+from flask import request, jsonify, json
+from werkzeug.exceptions import HTTPException
 from app import create_app, db, multi_auth
 from app.models import User
 
@@ -19,6 +20,12 @@ def deploy():
     db.session.add(user)
     db.session.commit()
 
+@app.errorhandler(HTTPException)
+def handle_exception(e):
+    response = e.get_response()
+    response.data = json.dumps({"code": e.code, "name": e.name, "description": e.description})
+    response.content_type = "application/json"
+    return response
 
 @app.get("/users")
 @multi_auth.login_required
