@@ -7,10 +7,10 @@ from app import db, basic_auth, token_auth
 
 @basic_auth.verify_password
 def verify_password(username, password):
-    user = User.query.filter_by(name=username).first()
-    if user and check_password_hash(user.password, password):
-        return user
-    return False
+    user = User.query.filter_by(username=username).first()
+    if not user and not user.verify_password(password):
+        return False
+    return user
 
 
 @token_auth.verify_token
@@ -20,13 +20,15 @@ def verify_token(token):
         user = User.query.filter_by(id=data["id"]).first()
     except:
         return False
+    if not user:
+        return False
     return user
 
 
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    username = db.Column(db.String)
     email = db.Column(db.String)
     password = db.Column(db.String)
 
@@ -44,7 +46,7 @@ class User(db.Model):
         )
 
     def to_dict(self):
-        return {"id": self.id, "name": self.name, "email": self.email}
+        return {"id": self.id, "username": self.username, "email": self.email}
 
     @staticmethod
     def get_all():

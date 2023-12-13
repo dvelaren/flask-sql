@@ -26,6 +26,12 @@ def user_list():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
 
+@app.get("/users/<int:user_id>")
+@multi_auth.login_required
+def get_user(user_id):
+    user = User.query.get(user_id)
+    return jsonify(user.to_dict())
+
 
 @app.get("/token")
 @app.get("/login")
@@ -41,7 +47,7 @@ def get_auth_token():
 @multi_auth.login_required
 def create_user():
     data = request.get_json()
-    user = User(name=data["name"], email=data["email"])
+    user = User(username=data["username"], email=data["email"])
     user.hash_password(data["password"])
     db.session.add(user)
     db.session.commit()
