@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from sqlalchemy.orm import DeclarativeBase
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 
@@ -11,6 +12,7 @@ class Base(DeclarativeBase):
 
 
 db = SQLAlchemy(model_class=Base)
+ma = Marshmallow()
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth()
 multi_auth = MultiAuth(basic_auth, token_auth)
@@ -25,6 +27,7 @@ def create_app():
         f"@localhost:5432/flask_test?client_encoding=utf8"
     )
     db.init_app(app)
+    ma.init_app(app)
 
     with app.app_context():
         db.create_all()

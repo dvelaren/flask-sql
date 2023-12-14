@@ -1,9 +1,11 @@
 # Flask SQLAlchemy test application
 
-from flask import request, jsonify, json
+from flask import request, jsonify, json, abort
 from werkzeug.exceptions import HTTPException
 from app import create_app, db, multi_auth, token_auth
 from app.models import User
+from app.schemas import user_schema, users_schema
+from marshmallow import ValidationError
 
 app = create_app()
 
@@ -46,14 +48,14 @@ def auth_error(status):
 @multi_auth.login_required
 def user_list():
     users = User.get_all()
-    return jsonify([user.to_dict() for user in users])
+    return users_schema.dump(users)
 
 
 @app.get("/users/<int:user_id>")
 @multi_auth.login_required
 def get_user(user_id):
     user = db.get_or_404(User, user_id)
-    return jsonify(user.to_dict())
+    return user_schema.dump(user)
 
 
 @app.get("/token")
@@ -70,11 +72,14 @@ def get_auth_token():
 @multi_auth.login_required
 def create_user():
     data = request.get_json()
-    user = User(username=data["username"], email=data["email"])
+    try:
+        user = user_schema.load(data)
+    except ValidationError as err:
+        abort(400, {"errors": err.messages})
     user.hash_password(data["password"])
     db.session.add(user)
     db.session.commit()
-    return {"user": user.id}
+    return user_schema.dump(user)
 
 
 @app.put("/users/<int:user_id>")
@@ -88,7 +93,7 @@ def update_user(user_id):
         else:
             setattr(user, key, value)
     db.session.commit()
-    return {"user": user.id}
+    return user_schema.dump(user)
 
 
 @app.delete("/users/<int:user_id>")
