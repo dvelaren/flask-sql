@@ -1,5 +1,6 @@
 # Flask SQLAlchemy test application
 
+import os
 from flask import request, jsonify, json, abort
 from werkzeug.exceptions import HTTPException
 from app import create_app, db, multi_auth, token_auth
@@ -18,7 +19,7 @@ def make_shell_context():
 @app.cli.command("deploy")
 def deploy():
     user = User(username="admin", email="admin@admin.com")
-    user.hash_password("admin")
+    user.hash_password(os.environ.get("API_ADMIN_PASSWORD") or "admin")
     db.session.add(user)
     db.session.commit()
 
