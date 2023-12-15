@@ -1,6 +1,6 @@
 from app import ma, db
 from app.models import User
-from marshmallow import fields, validate, validates, ValidationError, post_load
+from marshmallow import fields, validate, validates, pre_load, ValidationError
 
 
 class UserSchema(ma.SQLAlchemySchema):
@@ -9,13 +9,19 @@ class UserSchema(ma.SQLAlchemySchema):
         load_instance = True
 
     id = ma.auto_field()
-    username = fields.String(required=True)
+    username = ma.auto_field()
     email = fields.String(required=True, validate=validate.Email(error="Invalid email"))
     password = fields.String(
         required=True,
         validate=validate.Length(min=8, error="Password must contain 8 digits"),
         load_only=True,
     )
+
+    @pre_load
+    def process_input(self, data, **kwargs):
+        data["username"] = data["username"].lower().strip()
+        data["email"] = data["email"].lower().strip()
+        return data
 
     @validates("username")
     def validates_username(self, username):
