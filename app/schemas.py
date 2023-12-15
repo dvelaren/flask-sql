@@ -30,7 +30,6 @@ class UserUpdateSchema(ma.SQLAlchemySchema):
         model = User
         load_instance = True
 
-    id = ma.Integer(required=True, dump_only=True)
     email = fields.String(
         required=False, validate=validate.Email(error="Invalid email")
     )
