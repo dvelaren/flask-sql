@@ -18,10 +18,10 @@ def make_shell_context():
 
 @app.cli.command("deploy")
 def deploy():
-    user = User(username="admin", email="admin@admin.com")
-    user.hash_password(os.environ.get("API_ADMIN_PASSWORD") or "admin")
-    db.session.add(user)
-    db.session.commit()
+    User.create_admin(
+        username=os.environ.get("API_ADMIN_USERNAME") or "admin",
+        password=os.environ.get("API_ADMIN_PASSWORD") or "admin",
+    )
 
 
 @app.errorhandler(HTTPException)
@@ -80,7 +80,7 @@ def create_user():
     user.hash_password(data["password"])
     db.session.add(user)
     db.session.commit()
-    return user_schema.dump(user)
+    return {"user_id": user.id}, 201
 
 
 @app.put("/users/<int:user_id>")
@@ -96,7 +96,7 @@ def update_user(user_id):
     if data.get("password"):
         user.hash_password(data["password"])
     db.session.commit()
-    return user_schema.dump(user)
+    return {"user_id": user.id}
 
 
 @app.delete("/users/<int:user_id>")
@@ -105,7 +105,7 @@ def delete_user(user_id):
     user = db.get_or_404(User, user_id)
     db.session.delete(user)
     db.session.commit()
-    return {"user": user.id}
+    return {"user_id": user.id}
 
 
 if __name__ == "__main__":
