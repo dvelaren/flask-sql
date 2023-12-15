@@ -56,3 +56,16 @@ class User(db.Model):
     @staticmethod
     def get_all():
         return db.session.execute(db.select(User).order_by(User.id)).scalars()
+
+    @staticmethod
+    def create_admin(username, password):
+        if db.session.execute(
+            db.select(User).filter_by(username=username)
+        ).scalar_one_or_none() is None:
+            user = User(username=username, email="admin@admin.com")
+            user.hash_password(password)
+            db.session.add(user)
+            db.session.commit()
+    
+    def __repr__(self):
+        return f"<User {self.username}>"
