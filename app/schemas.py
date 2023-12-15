@@ -25,8 +25,10 @@ class UserSchema(ma.SQLAlchemySchema):
             raise ValidationError("That username is taken")
 
 
-class UserUpdateSchema(ma.Schema):
-    __model__ = User
+class UserUpdateSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = User
+        load_instance = True
 
     id = ma.Integer(required=True, dump_only=True)
     email = fields.String(
@@ -38,17 +40,7 @@ class UserUpdateSchema(ma.Schema):
         load_only=True,
     )
 
-    @post_load
-    def make_object(self, data, **kwargs):
-        if "user" in self.context:
-            user_model = self.context["user"]
-            user_model.email = data.get("email", user_model.email)
-            user_model.password = data.get("password", user_model.password)
-
-            return self.context["user"]
-        else:
-            return ValidationError("User must be in context")
-
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+user_update_schema = UserUpdateSchema()

@@ -4,7 +4,7 @@ from flask import request, jsonify, json, abort
 from werkzeug.exceptions import HTTPException
 from app import create_app, db, multi_auth, token_auth
 from app.models import User
-from app.schemas import user_schema, users_schema
+from app.schemas import user_schema, users_schema, user_update_schema
 from marshmallow import ValidationError
 
 app = create_app()
@@ -87,11 +87,13 @@ def create_user():
 def update_user(user_id):
     data = request.get_json()
     user = db.get_or_404(User, user_id)
-    for key, value in data.items():
-        if key == "password":
-            user.hash_password(value)
-        else:
-            setattr(user, key, value)
+    try:
+        user = user_update_schema.load(data, instance=user, partial=True)
+    except ValidationError as err:
+        abort(400, {"errors": err.messages})
+
+    if data.get("password"):
+        user.hash_password(data["password"])
     db.session.commit()
     return user_schema.dump(user)
 
