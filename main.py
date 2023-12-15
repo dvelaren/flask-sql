@@ -55,7 +55,7 @@ def user_list():
 @app.get("/users/<int:user_id>")
 @multi_auth.login_required
 def get_user(user_id):
-    user = db.get_or_404(User, user_id)
+    user = db.get_or_404(User, user_id, description="No users found")
     return user_schema.dump(user)
 
 
@@ -87,7 +87,7 @@ def create_user():
 @multi_auth.login_required
 def update_user(user_id):
     data = request.get_json()
-    user = db.get_or_404(User, user_id)
+    user = db.get_or_404(User, user_id, description="User not found")
     try:
         user = user_update_schema.load(data, instance=user, partial=True)
     except ValidationError as err:
@@ -102,7 +102,7 @@ def update_user(user_id):
 @app.delete("/users/<int:user_id>")
 @multi_auth.login_required
 def delete_user(user_id):
-    user = db.get_or_404(User, user_id)
+    user = db.get_or_404(User, user_id, description="User not found")
     db.session.delete(user)
     db.session.commit()
     return {"user_id": user.id}
