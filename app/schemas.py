@@ -1,6 +1,14 @@
+import datetime as dt
 from app import ma, db
 from app.models import User
-from marshmallow import fields, validate, validates, pre_load, ValidationError
+from marshmallow import (
+    fields,
+    validate,
+    validates,
+    pre_load,
+    post_load,
+    ValidationError,
+)
 
 
 class UserSchema(ma.SQLAlchemySchema):
@@ -16,11 +24,16 @@ class UserSchema(ma.SQLAlchemySchema):
         validate=validate.Length(min=8, error="Password must contain 8 digits"),
         load_only=True,
     )
+    created_at = fields.DateTime()
+    last_modified = fields.DateTime()
 
     @pre_load
     def process_input(self, data, **kwargs):
         data["username"] = data["username"].lower().strip()
         data["email"] = data["email"].lower().strip()
+        current_date = dt.datetime.now(dt.timezone.utc).isoformat()
+        data["created_at"] = current_date
+        data["last_modified"] = current_date
         return data
 
     @validates("username")
@@ -44,6 +57,11 @@ class UserUpdateSchema(ma.SQLAlchemySchema):
         validate=validate.Length(min=8, error="Password must contain 8 digits"),
         load_only=True,
     )
+
+    @post_load
+    def update_user(self, data, **kwargs):
+        data.last_modified = dt.datetime.now(dt.timezone.utc)
+        return data
 
 
 user_schema = UserSchema()

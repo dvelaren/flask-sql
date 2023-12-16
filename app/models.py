@@ -1,5 +1,6 @@
 import time
 import jwt
+import datetime as dt
 from flask import current_app as app
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, basic_auth, token_auth
@@ -36,6 +37,16 @@ class User(db.Model):
     username: Mapped[str] = mapped_column(db.String, unique=True, nullable=False)
     email: Mapped[str] = mapped_column(db.String)
     password: Mapped[str] = mapped_column(db.String)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=dt.datetime.now(dt.timezone.utc),
+    )
+    last_modified: Mapped[dt.datetime] = mapped_column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=dt.datetime.now(dt.timezone.utc),
+    )
 
     def hash_password(self, password):
         self.password = generate_password_hash(password)
@@ -50,22 +61,28 @@ class User(db.Model):
             algorithm="HS256",
         )
 
-    def to_dict(self):
-        return {"id": self.id, "username": self.username, "email": self.email}
-
     @staticmethod
     def get_all():
         return db.session.execute(db.select(User).order_by(User.id)).scalars()
 
     @staticmethod
     def create_admin(username, password):
-        if db.session.execute(
-            db.select(User).filter_by(username=username)
-        ).scalar_one_or_none() is None:
-            user = User(username=username, email="admin@admin.com")
+        if (
+            db.session.execute(
+                db.select(User).filter_by(username=username)
+            ).scalar_one_or_none()
+            is None
+        ):
+            current_date = dt.datetime.now(dt.timezone.utc)
+            user = User(
+                username=username,
+                email="admin@admin.com",
+                created_at=current_date,
+                last_modified=current_date,
+            )
             user.hash_password(password)
             db.session.add(user)
             db.session.commit()
-    
+
     def __repr__(self):
         return f"<User {self.username}>"
