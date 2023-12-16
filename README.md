@@ -23,6 +23,8 @@ docker-compose up -p flask-sql -d
     ```bash
     FLASK_APP=main.py
     SECRET_KEY=change-me
+    API_ADMIN_USERNAME=admin
+    API_ADMIN_PASSWORD=admin
     POSTGRES_USER=postgres
     POSTGRES_PASSWORD=postgres
     POSTGRES_DB=flask_test
