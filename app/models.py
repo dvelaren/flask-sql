@@ -1,10 +1,11 @@
 import time
 import jwt
 import datetime as dt
+from typing import List
 from flask import current_app as app
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, basic_auth, token_auth
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 @basic_auth.verify_password
@@ -47,6 +48,8 @@ class User(db.Model):
         nullable=False,
         default=dt.datetime.now(dt.timezone.utc),
     )
+    posts: Mapped[List["Post"]] = relationship(back_populates="user", lazy="dynamic", cascade="all, delete")
+
 
     def hash_password(self, password):
         self.password = generate_password_hash(password)
@@ -86,3 +89,28 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User {self.username}>"
+
+class Post(db.Model):
+    __tablename__ = "posts"
+    id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(db.String, nullable=False)
+    body: Mapped[str] = mapped_column(db.String, nullable=False)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=dt.datetime.now(dt.timezone.utc),
+    )
+    last_modified: Mapped[dt.datetime] = mapped_column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=dt.datetime.now(dt.timezone.utc),
+    )
+    user_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("users.id"))
+    user: Mapped["User"] = relationship(back_populates="posts")
+
+    @staticmethod
+    def get_all():
+        return db.session.execute(db.select(Post).order_by(Post.id)).scalars()
+
+    def __repr__(self):
+        return f"<Post {self.title}>"

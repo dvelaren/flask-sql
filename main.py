@@ -4,8 +4,15 @@ import os
 from flask import request, jsonify, json, abort
 from werkzeug.exceptions import HTTPException
 from app import create_app, db, multi_auth, token_auth
-from app.models import User
-from app.schemas import user_schema, users_schema, user_update_schema
+from app.models import User, Post
+from app.schemas import (
+    user_schema,
+    users_schema,
+    user_update_schema,
+    posts_schema,
+    post_schema,
+    post_update_schema,
+)
 from marshmallow import ValidationError
 
 app = create_app()
@@ -107,6 +114,54 @@ def delete_user(user_id):
     db.session.commit()
     return {"user_id": user.id}
 
+
+@app.get("/posts")
+@multi_auth.login_required
+def post_list():
+    posts = Post.get_all()
+    return posts_schema.dump(posts)
+
+
+@app.get("/posts/<int:post_id>")
+@multi_auth.login_required
+def get_post(post_id):
+    post = db.get_or_404(Post, post_id, description="No posts found")
+    return post_schema.dump(post)
+
+
+@app.post("/posts")
+@multi_auth.login_required
+def create_post():
+    data = request.get_json()
+    try:
+        post = post_schema.load(data)
+    except ValidationError as err:
+        abort(400, {"errors": err.messages})
+    db.session.add(post)
+    db.session.commit()
+    return {"post_id": post.id}, 201
+
+
+@app.put("/posts/<int:post_id>")
+@multi_auth.login_required
+def update_post(post_id):
+    data = request.get_json()
+    post = db.get_or_404(Post, post_id, description="Post not found")
+    try:
+        post = post_update_schema.load(data, instance=post, partial=True)
+    except ValidationError as err:
+        abort(400, {"errors": err.messages})
+    db.session.commit()
+    return {"post_id": post.id}
+
+
+@app.delete("/posts/<int:post_id>")
+@multi_auth.login_required
+def delete_post(post_id):
+    post = db.get_or_404(Post, post_id, description="Post not found")
+    db.session.delete(post)
+    db.session.commit()
+    return {"post_id": post.id}
 
 if __name__ == "__main__":
     print("Running app...")

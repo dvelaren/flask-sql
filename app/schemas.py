@@ -1,6 +1,6 @@
 import datetime as dt
 from app import ma, db
-from app.models import User
+from app.models import User, Post
 from marshmallow import (
     fields,
     validate,
@@ -64,6 +64,58 @@ class UserUpdateSchema(ma.SQLAlchemySchema):
         return data
 
 
+class PostSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Post
+        load_instance = True
+
+    id = ma.auto_field()
+    title = ma.auto_field()
+    body = ma.auto_field()
+    created_at = fields.DateTime()
+    last_modified = fields.DateTime()
+    user_id = ma.auto_field()
+
+    @pre_load
+    def process_input(self, data, **kwargs):
+        current_date = dt.datetime.now(dt.timezone.utc).isoformat()
+        data["created_at"] = current_date
+        data["last_modified"] = current_date
+        return data
+    
+    @validates("title")
+    def validates_title(self, title):
+        if db.session.execute(
+            db.select(Post).filter_by(title=title)
+        ).scalar_one_or_none():
+            raise ValidationError("That title is taken")
+
+
+class PostUpdateSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Post
+        load_instance = True
+
+    title = ma.auto_field()
+    body = ma.auto_field()
+
+    @validates("title")
+    def validates_title(self, title):
+        if db.session.execute(
+            db.select(Post).filter_by(title=title)
+        ).scalar_one_or_none():
+            raise ValidationError("That title is taken")
+
+    @post_load
+    def update_post(self, data, **kwargs):
+        data.last_modified = dt.datetime.now(dt.timezone.utc)
+        return data
+
+
+
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 user_update_schema = UserUpdateSchema()
+post_schema = PostSchema()
+posts_schema = PostSchema(many=True)
+post_update_schema = PostUpdateSchema()
